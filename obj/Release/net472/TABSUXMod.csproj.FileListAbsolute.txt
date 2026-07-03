@@ -1,0 +1,7 @@
+C:\Users\joshu\Downloads\TABSUXMod\obj\Release\net472\TABSUXMod.csproj.AssemblyReference.cache
+C:\Users\joshu\Downloads\TABSUXMod\obj\Release\net472\TABSUXMod.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\joshu\Downloads\TABSUXMod\obj\Release\net472\TABSUXMod.csproj.CoreCompileInputs.cache
+C:\Users\joshu\Downloads\TABSUXMod\bin\Release\net472\TABSUXMod.dll
+C:\Users\joshu\Downloads\TABSUXMod\bin\Release\net472\TABSUXMod.pdb
+C:\Users\joshu\Downloads\TABSUXMod\obj\Release\net472\TABSUXMod.dll
+C:\Users\joshu\Downloads\TABSUXMod\obj\Release\net472\TABSUXMod.pdb
