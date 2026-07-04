@@ -133,3 +133,68 @@ $t.Methods | Select-Object Name, IsPublic, IsStatic
 ```
 
 This is the primary tool for discovering method signatures and access levels before writing reflection code.
+
+---
+
+## SocialProfileService — the multiplayer-invite state machine
+
+`TFBGames.SocialProfileService` drives the "You were invited to a multiplayer game" popup.
+All knowledge below is from IL inspection (the class is in Assembly-CSharp, namespace `TFBGames`).
+
+**States** (`SocialProfileService/State`, private `state` field):
+
+| Value | Meaning | `SetState` side effect |
+|---|---|---|
+| 0 | Idle | `ClearInvitation()` (nulls stored invite) |
+| 1 | Waiting for open modal to close | none (OnUpdate polls) |
+| 2 | Show invite popup | `HandleInviteBasedOnGameMode(true)` → `ModalPanel.Choice(...)` |
+| 3 | Leave session, go to menu | network shutdown + `LoadMainMenu()` |
+| 4 | Entered main menu | sets `enteredMainMenuDelay = 3` |
+| 5 | Shutdown before join | network shutdown |
+| 6 | Join | `JoinSessionFromInvite()` |
+| 7 | Re-show after other dialog | close modal + `HandleInviteBasedOnGameMode(false)` |
+
+**Flow:** `OnInvitationReceived` (only acts when state == 0) stores the invite, then
+`SetState(1)` if a modal is already open, else `SetState(2)`. `OnUpdate` keeps the popup
+alive: state 1 → `SetState(2)` once the other modal closes; state 2 →
+`CheckIfAnotherClassOpenedTheDialog()` which bounces back to 1 and later re-shows.
+
+**Critical insight: states 1 and 2 form a self-healing loop.** Blocking a leaf method
+(`OnInvitationReceived`, `HandleInviteBasedOnGameMode`) or resetting state in a postfix gets
+undone the next frame by `OnUpdate`. Every transition funnels through the private
+`SetState(State)` — that is the only reliable choke point. A Harmony prefix there can rewrite
+the target state (boxed enum arg via `ref object __0`).
+
+**The Thunderstore launch-invite bug:** launching via Thunderstore Mod Manager makes Steam
+deliver a bogus invitation every launch. Its *arrival time is unpredictable* — timing gates
+all failed in practice: a fixed window from plugin `Awake` expires during the minutes-long
+modded boot, and `TABSSceneManager.IsInMainMenuScene()` (public static, global namespace)
+turns true while the loading screen is still up, so a menu+grace gate opens before the invite
+arrives. The one reliable property is that the bogus invite is always the **first** invite of
+the session (it comes from launch args, before any human could invite you). Fix: auto-decline
+the first `SetState(1|2)` of the session by rewriting it to `SetState(0)`, then never
+interfere again. See `SuppressLaunchInvitePatch.cs`.
+
+**Timing gotcha:** `enteredMainMenuDelay` defaults to 0 and is only set to 3 by `SetState(4)`
+(the invite-accept path) — it is NOT a general "main menu loaded" signal.
+
+---
+
+## CustomContentLoaderModIO — the "load mods?" warning
+
+`Landfall.TABS.Workshop.CustomContentLoaderModIO` shows "Warning: Mods can cause the game to
+become unstable. Do you want to load mods now?" (`POPUP_MODIO_CONFIRM_LOAD_MODS`) the first
+time Custom content is opened each session.
+
+**Flow** (`CheckPermissionToLoadMods(bool refresh, CheckPermissionToLoadModsCallback doneCallback)`,
+public instance, async void):
+
+- If `DidGivePermissionToLoadMods` (public getter, **private setter**, instance property,
+  session-only — not persisted): skips the popup, calls
+  `OnCheckedPermissionToLoadMods(false, doneCallback)`.
+- Otherwise shows the modal. YES = `{ DidGivePermissionToLoadMods = true;
+  OnCheckedPermissionToLoadMods(refresh, doneCallback); }`; NO passes `false` instead.
+
+**Auto-confirm** (see `AutoConfirmLoadModsPatch.cs`): prefix `CheckPermissionToLoadMods`,
+return false to skip the original, and replicate the YES lambda via reflection. Unlike the
+invite popup, this modal has no re-showing state machine — a plain prefix-skip works.

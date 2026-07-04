@@ -5,3 +5,4 @@ C:\Users\joshu\Downloads\TABSUXMod\bin\Release\net472\TABSUXMod.dll
 C:\Users\joshu\Downloads\TABSUXMod\bin\Release\net472\TABSUXMod.pdb
 C:\Users\joshu\Downloads\TABSUXMod\obj\Release\net472\TABSUXMod.dll
 C:\Users\joshu\Downloads\TABSUXMod\obj\Release\net472\TABSUXMod.pdb
+C:\Users\joshu\Downloads\TABSUXMod\obj\Release\net472\TABSUXMod.sourcelink.json

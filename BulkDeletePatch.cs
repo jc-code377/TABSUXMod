@@ -55,23 +55,43 @@ namespace TABSUXMod
             const string overlayName = "BulkSelectOverlay";
             if (go.transform.Find(overlayName) != null) return;
 
+            // Full-card click catcher — covers the whole card so clicking anywhere
+            // on the unit toggles selection while selectMode is on. It sits on top
+            // of the card's normal button but only blocks raycasts in select mode,
+            // so normal card clicks (open unit editor, etc.) are unaffected otherwise.
             var overlayGO = new GameObject(overlayName, typeof(RectTransform));
             overlayGO.transform.SetParent(go.transform, false);
             overlayGO.SetActive(selectMode);
             overlays.Add(overlayGO);
 
             var rt = overlayGO.GetComponent<RectTransform>();
-            rt.anchorMin        = new Vector2(0f, 1f);
-            rt.anchorMax        = new Vector2(0f, 1f);
-            rt.pivot            = new Vector2(0f, 1f);
-            rt.anchoredPosition = new Vector2(4f, -4f);
-            rt.sizeDelta        = new Vector2(28f, 28f);
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
 
-            var bg = overlayGO.AddComponent<Image>();
+            var fullBg = overlayGO.AddComponent<Image>();
+            fullBg.color = new Color(0f, 0f, 0f, 0f); // invisible, just a raycast target
+
+            var btn = overlayGO.AddComponent<Button>();
+            btn.targetGraphic = fullBg;
+            btn.transition = Selectable.Transition.None;
+
+            // Checkbox badge, drawn in the corner, purely visual
+            var checkboxGO = new GameObject("Checkbox", typeof(RectTransform));
+            checkboxGO.transform.SetParent(overlayGO.transform, false);
+            var checkboxRT = checkboxGO.GetComponent<RectTransform>();
+            checkboxRT.anchorMin        = new Vector2(0f, 1f);
+            checkboxRT.anchorMax        = new Vector2(0f, 1f);
+            checkboxRT.pivot            = new Vector2(0f, 1f);
+            checkboxRT.anchoredPosition = new Vector2(4f, -4f);
+            checkboxRT.sizeDelta        = new Vector2(28f, 28f);
+
+            var bg = checkboxGO.AddComponent<Image>();
             bg.color = new Color(0f, 0f, 0f, 0.55f);
 
             var checkGO = new GameObject("Check", typeof(RectTransform));
-            checkGO.transform.SetParent(overlayGO.transform, false);
+            checkGO.transform.SetParent(checkboxGO.transform, false);
             var checkRT = checkGO.GetComponent<RectTransform>();
             checkRT.anchorMin = Vector2.zero;
             checkRT.anchorMax = Vector2.one;
@@ -83,9 +103,6 @@ namespace TABSUXMod
             checkText.fontSize  = 18f;
             checkText.alignment = TextAlignmentOptions.Center;
             checkText.color     = Color.white;
-
-            var btn = overlayGO.AddComponent<Button>();
-            btn.targetGraphic = bg;
 
             var capturedUnit  = unit;
             var capturedCheck = checkText;
@@ -228,7 +245,8 @@ namespace TABSUXMod
             foreach (var ov in overlays)
             {
                 if (ov == null) continue;
-                var img = ov.GetComponent<Image>();
+                var checkboxTransform = ov.transform.Find("Checkbox");
+                var img = checkboxTransform != null ? checkboxTransform.GetComponent<Image>() : null;
                 if (img != null) img.color = new Color(0f, 0f, 0f, 0.55f);
                 var txt = ov.GetComponentInChildren<TextMeshProUGUI>();
                 if (txt != null) txt.text = "";

@@ -3,13 +3,17 @@ using HarmonyLib;
 
 namespace TABSUXMod
 {
-    [BepInPlugin("joshbaier.tabsuxmod", "TABS UX Mod", "1.0.0")]
+    [BepInPlugin("joshbaier.tabsuxmod", "Better UX", "1.0.0")]
     public class Launcher : BaseUnityPlugin
     {
         private void Awake()
         {
-            new Harmony("joshbaier.tabsuxmod").PatchAll(typeof(BulkDeletePatch));
-            Logger.LogInfo("TABS UX Mod loaded — bulk unit delete enabled.");
+            var harmony = new Harmony("joshbaier.tabsuxmod");
+            harmony.PatchAll(typeof(BulkDeletePatch));
+            harmony.PatchAll(typeof(DoubleClickPlayMapPatch));
+            SuppressLaunchInvitePatch.Apply(harmony);
+            AutoConfirmLoadModsPatch.Apply(harmony);
+            Logger.LogInfo("Better UX loaded.");
         }
     }
 }
