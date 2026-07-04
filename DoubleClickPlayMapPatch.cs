@@ -1,14 +1,18 @@
 using HarmonyLib;
+using Landfall.TABS;
 using LevelCreator;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace TABSUXMod
 {
-    // Clicking a custom map card opens the Play/Edit/Delete submenu (original OnPointerClick
-    // -> Click() -> ShowLevel()). That submenu opening can interfere with the engine's own
-    // PointerEventData.clickCount (e.g. selection/focus changes reset the click streak), so
-    // double-click detection is tracked here manually per-map instead of trusting clickCount.
+    // Clicking a custom map card opens the Play/Edit/Delete submenu, whose fade backdrop
+    // (FactionCreatorFadeBG) turns on raycastTarget and covers the whole grid — including
+    // the card that was just clicked. So a real second click never reaches
+    // CustomContentLevelButton.OnPointerClick again; it lands on the fade instead, which
+    // normally just closes the submenu. To get double-click-to-play, we remember the map
+    // + time of the first click and, when the fade intercepts a follow-up click shortly
+    // after while the sidebar is still showing that same map, Play it instead of closing.
     public static class DoubleClickPlayMapPatch
     {
         private const float DoubleClickWindow = 0.4f;
@@ -20,26 +24,25 @@ namespace TABSUXMod
         [HarmonyPatch(typeof(CustomContentLevelButton), "OnPointerClick")]
         public static void OnLevelButtonPointerClick(CustomContentLevelButton __instance, PointerEventData eventData)
         {
-            var map = __instance.customMap;
-            if (map == null) return;
+            lastClickedMap = __instance.customMap;
+            lastClickTime = Time.unscaledTime;
+        }
 
-            float now = Time.unscaledTime;
-            bool isDoubleClick = map == lastClickedMap && (now - lastClickTime) <= DoubleClickWindow;
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(FactionCreatorFadeBG), "OnPointerClick")]
+        public static bool OnFadePointerClick(FactionCreatorFadeBG __instance)
+        {
+            if (lastClickedMap == null) return true;
+            if (Time.unscaledTime - lastClickTime > DoubleClickWindow) return true;
 
-            lastClickedMap = map;
-            lastClickTime = now;
-
-            if (!isDoubleClick) return;
+            var sideBar = __instance.sidebar;
+            if (sideBar == null || sideBar.levelParent == null || !sideBar.levelParent.activeSelf) return true;
 
             lastClickedMap = null;
             lastClickTime = -1f;
 
-            if (__instance.browserManager == null) return;
-
-            var sideBar = __instance.browserManager.customContentSideBar;
-            if (sideBar == null) return;
-
             sideBar.Play();
+            return false;
         }
     }
 }
