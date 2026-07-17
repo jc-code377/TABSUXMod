@@ -9,7 +9,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <TABSManaged>C:\Program Files (x86)\Steam\steamapps\common\Totally Accurate Battle Simulator\TotallyAccurateBattleSimulator_Data\Managed</TABSManaged>
     <BepInExCore>C:\Users\joshu\AppData\Roaming\Thunderstore Mod Manager\DataFolder\TABS\profiles\Default\BepInEx\core</BepInExCore>
-    <PluginsOut>C:\Users\joshu\AppData\Roaming\Thunderstore Mod Manager\DataFolder\TABS\profiles\Default\BepInEx\plugins</PluginsOut>
+    <PluginsOut>C:\Users\joshu\AppData\Roaming\Thunderstore Mod Manager\DataFolder\TABS\profiles\Default\BepInEx\plugins\TABSUXMod-dev</PluginsOut>
   </PropertyGroup>
 
   <ItemGroup>

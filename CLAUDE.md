@@ -8,7 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 & "C:\Program Files\dotnet\dotnet.exe" build TABSUXMod.csproj -c Release
 ```
 
-The post-build step automatically copies `TABSUXMod.dll` into the Thunderstore Mod Manager plugins folder. **Always launch TABS through Thunderstore Mod Manager**, not Steam directly — BepInEx is only injected by the manager.
+The post-build step automatically copies `TABSUXMod.dll` into `plugins\TABSUXMod-dev\` — a dev folder the Thunderstore Mod Manager doesn't manage. Do NOT deploy into `plugins\jc_mods-Better_UX\` (the store-installed package of this mod): the manager owns that folder — disabling the mod renames every file in it to `.old`, silently deleting dev builds deployed there. That store package is currently disabled; if it's ever re-enabled, two DLLs with the same plugin GUID will coexist and BepInEx loads the higher `[BepInPlugin]` version (a same-version tie is arbitrary and once loaded the stale store copy — log symptom: `Skipping [Better UX x.y.z] because a newer version exists`). So always bump the `[BepInPlugin]` version in `Launcher.cs` (kept in sync with `manifest.json`) when making changes.
+
+**Always launch TABS through Thunderstore Mod Manager**, not Steam directly — BepInEx is only injected by the manager.
 
 ## Checking logs
 
@@ -54,9 +56,10 @@ TABS runs on Unity (net472). BepInEx 5 is injected via `winhttp.dll` by Thunders
 
 ### This mod (TABSUXMod)
 
-Two files:
-- **`Launcher.cs`** — `BaseUnityPlugin` entry point. Registers all Harmony patches in `BulkDeletePatch` via `new Harmony(id).PatchAll(typeof(BulkDeletePatch))`.
-- **`BulkDeletePatch.cs`** — All patch logic. Three Harmony postfixes drive everything:
+Files:
+- **`Launcher.cs`** — `BaseUnityPlugin` entry point. Registers each patch class via `harmony.PatchAll(typeof(...))` or a static `Apply(harmony)`.
+- **`AllUnitBasesPatch.cs`** — Appends every base rig from the content database (`GetAllUnitBases()` + distinct `UnitBase` of `GetAllUnitBlueprints()`) to the Unit Creator's base selector, deduped by rig GameObject and filtered to rigs with a **root** `Unit` (the save path dereferences it) plus `Torso`/`HealthHandler`/`RigidbodyHolder` anywhere. Two idempotent entry points: a prefix on `UnitEditorManager.Start` (runs after other mods' `sceneLoaded` hooks, so their bases are deduped too — this is the one that does the work in practice, adding ~146 bases) and a safety-net prefix on `UnitEditorUnitBaseGrid.SpawnUnitBaseButtons` (rewrites the `ref` wrapper-array arg from `manager.UnitBases` so button indices stay aligned with `SwitchUnitBase(index)`). Also owns the save/load round-trip fix: `Inject` indexes every selector rig into `AssetLoader.m_nonStreamableAssets` (reflection) under its root Unit entity GUID, and a postfix on `ContentDatabase.GetGameObject` resolves still-missed GUIDs from a cached blueprint-rig map so units saved on custom bases load in any session (browser/battle, creator never opened). Without this, saved units "corrupt": the base GUID resolves null and `Spawn` throws. See `docs/tabs-game-internals.md` → "Unit Creator (UnitEditorManager) — base selector".
+- **`BulkDeletePatch.cs`** — Bulk delete logic. Three Harmony postfixes drive everything:
   1. `CustomContentGridBrowser.OnEnable` — clears the selection set when the browser opens/closes.
   2. `CustomContentGridBrowser.Populate` — injects the "DELETE SELECTED" button after the grid is fully built. Uses this timing because `OnEnable` fires before `layout01` and the `New Unit` button exist in the scene.
   3. `UnitButtonBase.Setup(UnitBlueprint unit)` — stamps a 28×28 checkbox overlay onto each unit card.
@@ -99,6 +102,7 @@ A separate content-modding template (not UI). Useful as reference for:
 
 ### Common pitfalls
 
+- **Class-level `[HarmonyPatch]` + private name-convention `Prefix` silently no-ops** with this Harmony (`0Harmony20.dll`, BepInEx 5.4.16): `PatchAll(typeof(...))` registers nothing, throws nothing, logs nothing. Always use method-level `[HarmonyPrefix]`/`[HarmonyPostfix]` + `[HarmonyPatch(type, "name")]` on **public static** methods, and keep the `Patched:` log loop in `Launcher.Awake` (prints `harmony.GetPatchedMethods()`) — it's the only cheap detector for silent registration failures. Full writeup: `docs/tabs-game-internals.md` → "Harmony patching in this environment".
 - **`OnEnable` fires too early** — the unit grid and its sibling buttons don't exist yet. Use `Populate` for anything that needs the grid to be built.
 - **Cloned button retains listeners** — always replace `onClick` with `new Button.ButtonClickedEvent()`, not just `RemoveAllListeners()`.
 - **`DMNewContentManager` is unrelated to deletion** — its name is misleading; it only tracks "new content" notification badges.

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\joshu\\Downloads\\TABSUXMod\\TABSUXMod.csproj": {}
+    "C:\\Users\\joshu\\Downloads\\Tabs Modding\\TABSUXMod\\TABSUXMod.csproj": {}
   },
   "projects": {
-    "C:\\Users\\joshu\\Downloads\\TABSUXMod\\TABSUXMod.csproj": {
+    "C:\\Users\\joshu\\Downloads\\Tabs Modding\\TABSUXMod\\TABSUXMod.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\joshu\\Downloads\\TABSUXMod\\TABSUXMod.csproj",
+        "projectUniqueName": "C:\\Users\\joshu\\Downloads\\Tabs Modding\\TABSUXMod\\TABSUXMod.csproj",
         "projectName": "TABSUXMod",
-        "projectPath": "C:\\Users\\joshu\\Downloads\\TABSUXMod\\TABSUXMod.csproj",
+        "projectPath": "C:\\Users\\joshu\\Downloads\\Tabs Modding\\TABSUXMod\\TABSUXMod.csproj",
         "packagesPath": "C:\\Users\\joshu\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\joshu\\Downloads\\TABSUXMod\\obj\\",
+        "outputPath": "C:\\Users\\joshu\\Downloads\\Tabs Modding\\TABSUXMod\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\joshu\\AppData\\Roaming\\NuGet\\NuGet.Config"

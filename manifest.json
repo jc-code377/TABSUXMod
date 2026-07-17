@@ -1,8 +1,8 @@
 {
     "name": "Better_UX",
-    "version_number": "1.0.0",
+    "version_number": "1.1.2",
     "website_url": "https://github.com/jc-code377/TABSUXMod",
-    "description": "Quality-of-life fixes for the TABS custom: bulk-delete units, double-click to play custom maps, and less popups.",
+    "description": "Quality-of-life improvements to TABS UI: bulk-delete units, double-click to play custom maps, all unit bases in the Unit Creator, and less popups.",
     "dependencies": [
         "BepInEx-BepInExPack-5.4.2100"
     ]
